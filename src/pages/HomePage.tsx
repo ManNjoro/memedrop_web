@@ -34,6 +34,7 @@ export function HomePage() {
 
   const memes = data?.pages.flatMap((page) => page.memes) ?? [];
   const [featured, ...rest] = memes;
+  console.log("featured", featured, '\n', toCardMeme(featured)?.mediaUrl)
 
   return (
     <div>
