@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { SignedIn, SignedOut, useUser } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/react';
 import { Search, Sun, Moon, Plus } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { PrimaryButton } from '../ui/Button';
@@ -13,6 +13,7 @@ const NAV_LINKS = [
 
 export function Header() {
   const { user } = useUser();
+  const { isSignedIn } = useAuth();
   const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
 
@@ -40,11 +41,11 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <SignedIn>
+          {isSignedIn && (
             <PrimaryButton onClick={() => navigate('/upload')} className="hidden sm:inline-flex" icon={<Plus size={16} />}>
               Drop a meme
             </PrimaryButton>
-          </SignedIn>
+          )}
 
           <Link
             to="/search"
@@ -67,14 +68,13 @@ export function Header() {
             )}
           </button>
 
-          <SignedIn>
+          {isSignedIn ? (
             <Link to="/profile" aria-label="Your profile">
               <Avatar src={user?.imageUrl} name={user?.username ?? 'you'} size="sm" />
             </Link>
-          </SignedIn>
-          <SignedOut>
+          ) : (
             <PrimaryButton onClick={() => navigate('/sign-in')}>Sign In</PrimaryButton>
-          </SignedOut>
+          )}
         </div>
       </div>
 

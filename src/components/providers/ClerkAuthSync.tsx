@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/react';
 import { registerAuthTokenGetter } from '@/lib/api/client';
 
 export function ClerkAuthSync() {

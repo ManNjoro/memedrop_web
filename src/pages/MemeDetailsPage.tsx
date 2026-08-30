@@ -1,7 +1,6 @@
-// src/pages/MemeDetailsPage.tsx
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/react';
 import { Download, Share2, Link2, Heart, Bookmark, MoreHorizontal, Trash2, Flag, WifiOff } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/Button';
