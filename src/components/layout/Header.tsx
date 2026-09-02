@@ -28,7 +28,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border-light dark:border-border bg-bg-light/90 dark:bg-bg/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-4 px-6">
+      <div className="mx-auto flex h-16 max-w-350 items-center justify-between gap-4 px-6">
         <Link to="/" className="shrink-0 text-xl font-extrabold text-text-primary-light dark:text-text-primary">
           Meme<span className="text-primary">Drop</span>
         </Link>
