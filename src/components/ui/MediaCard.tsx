@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Play, Share2 } from 'lucide-react';
+import { Download, ImageOff, Play, Share2 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { StatusBadge } from './Chip';
 import { cn } from '@/lib/utils';
@@ -7,7 +8,15 @@ import { cn } from '@/lib/utils';
 export type CardMeme = {
   id: string;
   title: string;
-  mediaUrl: string; // image url, or video thumbnail/poster for video cards
+  // The image to show, when one exists — always set for image memes, and
+  // set for video memes only when Cloudinary's auto-generated poster
+  // (thumbnailUrl) is available.
+  previewUrl: string | null;
+  // Raw video file, used as a <video preload="metadata"> fallback when
+  // previewUrl is null — the browser renders the first frame on its own
+  // once metadata loads, so this still shows something real rather than a
+  // blank box. Only ever set for video memes.
+  videoSrc?: string;
   mediaType: 'image' | 'video';
   durationSec?: number | null;
   creatorName: string;
@@ -32,28 +41,49 @@ function formatDuration(sec?: number | null) {
 
 export function MediaCard({ meme, variant = 'grid', onDownload, onShare }: MediaCardProps) {
   const aspect = meme.aspectRatio ?? (variant === 'grid' ? 0.85 : 1.1);
+  // Tracks a broken previewUrl (e.g. a stale/deleted Cloudinary asset) so we
+  // can fall back gracefully instead of showing the browser's broken-image icon.
+  const [imageFailed, setImageFailed] = useState(false);
+
+  const showImage = !!meme.previewUrl && !imageFailed;
+  const showVideoFallback = !showImage && meme.mediaType === 'video' && !!meme.videoSrc;
 
   return (
     <Link
       to={`/meme/${meme.id}`}
       aria-label={`Open meme: ${meme.title}`}
-      className="group mb-4 block overflow-hidden rounded-lg bg-surface-light dark:bg-surface"
+      className="group block overflow-hidden rounded-lg border border-border-light dark:border-border bg-surface-light dark:bg-surface shadow-sm transition-shadow hover:shadow-lg"
     >
       <div
         className="relative w-full overflow-hidden bg-surface-alt-light dark:bg-surface-alt"
         style={{ aspectRatio: aspect }}
       >
-        <img
-          src={meme.mediaUrl}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+        {showImage ? (
+          <img
+            src={meme.previewUrl!}
+            alt=""
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : showVideoFallback ? (
+          <video
+            src={meme.videoSrc}
+            preload="metadata"
+            muted
+            playsInline
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <ImageOff size={28} className="text-text-muted" strokeWidth={1.5} />
+          </div>
+        )}
 
         {meme.mediaType === 'video' && (
           <>
             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-black/50">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-black/50 transition-transform group-hover:scale-110">
                 <Play size={20} className="fill-text-primary text-text-primary" />
               </div>
             </div>
@@ -94,7 +124,7 @@ export function MediaCard({ meme, variant = 'grid', onDownload, onShare }: Media
         </div>
       </div>
 
-      <div className="px-2.5 py-2">
+      <div className="px-3 py-2.5">
         <p className={cn('truncate text-sm font-semibold text-text-primary-light dark:text-text-primary')}>
           {meme.title}
         </p>
