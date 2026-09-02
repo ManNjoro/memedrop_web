@@ -12,6 +12,7 @@ import {
   type VerifyCodeFormValues,
 } from '@/lib/validation/authSchemas';
 import { syncUser } from '@/lib/api/users';
+import { usePostHog } from '@posthog/react';
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ export function SignUpPage() {
   const [email, setEmail] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const posthog = usePostHog();
 
   const signUpForm = useForm<SignUpFormValues>({ resolver: zodResolver(signUpSchema) });
   const verifyForm = useForm<VerifyCodeFormValues>({ resolver: zodResolver(verifyCodeSchema) });
@@ -48,7 +51,8 @@ export function SignUpPage() {
       }
       setEmail(values.email);
       setIsVerifying(true);
-    } catch {
+    } catch (err) {
+      posthog?.captureException(err);
       setFormError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -70,6 +74,12 @@ export function SignUpPage() {
         navigate: async ({ session, decorateUrl }) => {
           if (session?.currentTask) return;
 
+          const userId = session?.user?.id;
+          if (userId) {
+            posthog?.identify(userId);
+          }
+          posthog?.capture('user_signed_up');
+
           // Same reasoning as the mobile app: the Clerk webhook eventually
           // creates this user's Neon row too, but it's async and can lag —
           // sync explicitly here so the row exists the instant they land
@@ -90,7 +100,8 @@ export function SignUpPage() {
           }
         },
       });
-    } catch {
+    } catch (err) {
+      posthog?.captureException(err);
       setFormError('Verification failed. Try again.');
     } finally {
       setLoading(false);

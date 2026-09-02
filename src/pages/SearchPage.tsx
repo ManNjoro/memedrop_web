@@ -11,6 +11,7 @@ import { InfiniteScrollSentinel } from '@/components/ui/InfiniteScrollSentinel';
 import { useMemesQuery } from '@/lib/queries/useMemesQuery';
 import { toCardMeme } from '@/lib/mappers';
 import type { ApiMediaType, ApiSort } from '@/lib/api/types';
+import { usePostHog } from '@posthog/react';
 
 type MediaFilter = 'all' | 'images' | 'videos';
 const SORT_OPTIONS: ApiSort[] = ['newest', 'oldest', 'most_downloaded', 'most_popular'];
@@ -23,6 +24,7 @@ const FILTER_TO_API: Record<MediaFilter, ApiMediaType | undefined> = {
 
 export function SearchPage() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') ?? '';
 
@@ -41,8 +43,10 @@ export function SearchPage() {
   useEffect(() => {
     if (debouncedQuery) {
       navigate(`/search?q=${encodeURIComponent(debouncedQuery)}`, { replace: true });
+      posthog?.capture('search_performed', { query: debouncedQuery, filter, sort });
     }
-  }, [debouncedQuery, navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
 
   const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useMemesQuery(
     { q: debouncedQuery, mediaType: FILTER_TO_API[filter], sort, limit: 20 },

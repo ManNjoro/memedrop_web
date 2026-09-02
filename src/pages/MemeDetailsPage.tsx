@@ -13,6 +13,7 @@ import { recordDownload, recordView } from '@/lib/api/memes';
 import { formatRelativeTime, formatCompactNumber } from '@/lib/formatRelativeTime';
 import { useToastStore } from '@/store/useToastStore';
 import { cn } from '@/lib/utils';
+import { usePostHog } from '@posthog/react';
 
 /**
  * Cloudinary's URLs are cross-origin, and the `download` attribute on a
@@ -39,6 +40,7 @@ export function MemeDetailsPage() {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const showToast = useToastStore((s) => s.showToast);
+  const posthog = usePostHog();
 
   const { data: meme, isLoading, isError, error, refetch } = useMemeQuery(id);
   const likeMutation = useLikeMutation(id ?? '');
@@ -93,8 +95,10 @@ export function MemeDetailsPage() {
       const ext = meme.mediaType === 'video' ? 'mp4' : 'jpg';
       await downloadFile(meme.mediaUrl, `memedrop-${meme.id}.${ext}`);
       recordDownload(meme.id).catch(() => {});
+      posthog?.capture('meme_downloaded', { meme_id: meme.id, media_type: meme.mediaType });
       showToast({ message: 'Download started', variant: 'success' });
-    } catch {
+    } catch (err) {
+      posthog?.captureException(err);
       showToast({ message: 'Couldn\u2019t download this meme. Try again.', variant: 'error' });
     } finally {
       setDownloading(false);
@@ -105,17 +109,20 @@ export function MemeDetailsPage() {
     if (navigator.share) {
       try {
         await navigator.share({ title: meme.title, text: `Check this out on MemeDrop: ${meme.title}`, url: shareUrl });
+        posthog?.capture('meme_shared', { meme_id: meme.id, method: 'native_share' });
       } catch {
         // person cancelled the native share sheet — not an error
       }
     } else {
       await navigator.clipboard.writeText(shareUrl);
+      posthog?.capture('meme_shared', { meme_id: meme.id, method: 'copy_link' });
       showToast({ message: 'Link copied', variant: 'success' });
     }
   };
 
   const onCopyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
+    posthog?.capture('meme_shared', { meme_id: meme.id, method: 'copy_link' });
     showToast({ message: 'Link copied', variant: 'success' });
   };
 
@@ -124,6 +131,7 @@ export function MemeDetailsPage() {
       showToast({ message: 'Sign in to like memes.', variant: 'error' });
       return;
     }
+    posthog?.capture(meme.isLiked ? 'meme_unliked' : 'meme_liked', { meme_id: meme.id, media_type: meme.mediaType });
     likeMutation.mutate(meme.isLiked);
   };
 
@@ -132,12 +140,14 @@ export function MemeDetailsPage() {
       showToast({ message: 'Sign in to save memes.', variant: 'error' });
       return;
     }
+    posthog?.capture(meme.isSaved ? 'meme_unsaved' : 'meme_saved', { meme_id: meme.id, media_type: meme.mediaType });
     saveMutation.mutate(meme.isSaved);
   };
 
   const onConfirmDelete = async () => {
     try {
       await deleteMutation.mutateAsync(meme.id);
+      posthog?.capture('meme_deleted', { meme_id: meme.id, media_type: meme.mediaType });
       setConfirmDeleteOpen(false);
       showToast({ message: 'Meme deleted', variant: 'success' });
       navigate(-1);

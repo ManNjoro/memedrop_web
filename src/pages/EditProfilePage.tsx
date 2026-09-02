@@ -5,11 +5,13 @@ import { ArrowLeft, Camera } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { PrimaryButton } from '@/components/ui/Button';
 import { useToastStore } from '@/store/useToastStore';
+import { usePostHog } from '@posthog/react';
 
 export function EditProfilePage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const showToast = useToastStore((s) => s.showToast);
+  const posthog = usePostHog();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
@@ -46,6 +48,10 @@ export function EditProfilePage() {
     setSaving(true);
     try {
       await user.update({ firstName: firstName.trim(), lastName: lastName.trim() });
+      posthog?.capture('profile_updated', {
+        changed_avatar: avatarPreview !== null,
+        changed_name: firstName !== (user?.firstName ?? '') || lastName !== (user?.lastName ?? ''),
+      });
       showToast({ message: 'Profile updated', variant: 'success' });
       navigate(-1);
     } catch {

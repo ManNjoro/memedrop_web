@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
 import { useMemesQuery } from '@/lib/queries/useMemesQuery';
 import { toCardMeme } from '@/lib/mappers';
+import { usePostHog } from '@posthog/react';
 
 const EXPLORE_CATEGORIES = [
   'Programming',
@@ -25,6 +26,7 @@ const EXPLORE_CATEGORIES = [
 
 export function ExplorePage() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -54,6 +56,7 @@ export function ExplorePage() {
             label={cat}
             selected={activeCategory === cat}
             onClick={() => {
+              posthog?.capture('category_selected', { category: cat });
               setActiveCategory(cat);
               goToSearch(cat);
             }}

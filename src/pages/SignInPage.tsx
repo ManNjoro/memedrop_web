@@ -6,6 +6,7 @@ import { useAuth, useSignIn } from '@clerk/react';
 import { AuthInput } from '@/components/ui/AuthInput';
 import { PrimaryButton } from '@/components/ui/Button';
 import { signInSchema, type SignInFormValues } from '@/lib/validation/authSchemas';
+import { usePostHog } from '@posthog/react';
 
 export function SignInPage() {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ export function SignInPage() {
   const { signIn } = useSignIn();
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const posthog = usePostHog();
 
   const {
     register,
@@ -38,6 +41,13 @@ export function SignInPage() {
             // Pending session task (e.g. org selection) — let Clerk's own
             // session-task handling take over instead of redirecting.
             if (session?.currentTask) return;
+
+            const userId = session?.user?.id;
+            if (userId) {
+              posthog?.identify(userId);
+            }
+            posthog?.capture('user_signed_in');
+
             const url = decorateUrl('/') as To;
             if (typeof url === 'string' && url.startsWith('http')) {
               window.location.href = url;
@@ -49,7 +59,8 @@ export function SignInPage() {
       } else {
         setFormError('Additional verification is required for this account.');
       }
-    } catch {
+    } catch (err) {
+      posthog?.captureException(err);
       setFormError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);

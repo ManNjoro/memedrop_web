@@ -16,6 +16,7 @@ import {
 } from '@/lib/api/cloudinaryUpload';
 import { createMeme } from '@/lib/api/memes';
 import type { ApiMediaType } from '@/lib/api/types';
+import { usePostHog } from '@posthog/react';
 
 const MAX_IMAGE_MB = 10;
 const MAX_VIDEO_MB = 50;
@@ -26,6 +27,7 @@ type MediaMetadata = { width?: number; height?: number; durationSec?: number };
 
 export function UploadPage() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -151,6 +153,10 @@ export function UploadPage() {
       setNewMemeId(meme.id);
       setStage('success');
     } catch (e) {
+      posthog?.capture('meme_upload_failed', {
+        media_type: mediaType ?? undefined,
+      });
+      posthog?.captureException(e);
       setUploadError(e instanceof Error ? e.message : 'That meme didn\u2019t make it. Check your connection and try again.');
       setStage('error');
     }
