@@ -103,7 +103,7 @@ export function MediaCard({ meme, variant = 'grid', onDownload, onShare }: Media
                 onShare();
               }}
               aria-label="Share meme"
-              className="mr-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/70"
+              className="mr-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 cursor-pointer"
             >
               <Share2 size={14} className="text-text-primary" />
             </button>
@@ -116,7 +116,7 @@ export function MediaCard({ meme, variant = 'grid', onDownload, onShare }: Media
                 onDownload();
               }}
               aria-label="Download meme"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/70"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 hover:bg-black/70 cursor-pointer"
             >
               <Download size={14} className="text-text-primary" />
             </button>

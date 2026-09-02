@@ -1,40 +1,152 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ImageOff, WifiOff } from 'lucide-react';
-import { CategoryChip } from '@/components/ui/Chip';
-import { MediaCard } from '@/components/ui/MediaCard';
-import { toCardMeme } from '@/lib/mappers';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SkeletonGrid } from '@/components/ui/Skeleton';
-import { useMemesQuery } from '@/lib/queries/useMemesQuery';
-import type { FetchMemesParams } from '@/lib/api/memes';
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ImageOff, WifiOff } from "lucide-react";
+import { CategoryChip } from "@/components/ui/Chip";
+import { MediaCard } from "@/components/ui/MediaCard";
+import { toCardMeme } from "@/lib/mappers";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { SkeletonGrid } from "@/components/ui/Skeleton";
+import { useMemesQuery } from "@/lib/queries/useMemesQuery";
+import type { FetchMemesParams } from "@/lib/api/memes";
 
-const CATEGORIES = ['Trending', 'Latest', 'Videos', 'Images', 'Popular'] as const;
+const CATEGORIES = [
+  "Trending",
+  "Latest",
+  "Videos",
+  "Images",
+  "Popular",
+] as const;
 type Category = (typeof CATEGORIES)[number];
 
 function paramsForCategory(category: Category): FetchMemesParams {
   switch (category) {
-    case 'Trending':
-      return { sort: 'most_popular', limit: 13 };
-    case 'Latest':
-      return { sort: 'newest', limit: 13 };
-    case 'Videos':
-      return { mediaType: 'video', sort: 'newest', limit: 13 };
-    case 'Images':
-      return { mediaType: 'image', sort: 'newest', limit: 13 };
-    case 'Popular':
-      return { sort: 'most_downloaded', limit: 13 };
+    case "Trending":
+      return { sort: "most_popular", limit: 13 };
+    case "Latest":
+      return { sort: "newest", limit: 13 };
+    case "Videos":
+      return { mediaType: "video", sort: "newest", limit: 13 };
+    case "Images":
+      return { mediaType: "image", sort: "newest", limit: 13 };
+    case "Popular":
+      return { sort: "most_downloaded", limit: 13 };
   }
 }
 
 export function HomePage() {
-  const [activeCategory, setActiveCategory] = useState<Category>('Trending');
-  const params = useMemo(() => paramsForCategory(activeCategory), [activeCategory]);
+  const [activeCategory, setActiveCategory] = useState<Category>("Trending");
+  const [linkCopied, setLinkCopied] = useState(false);
+  const params = useMemo(
+    () => paramsForCategory(activeCategory),
+    [activeCategory],
+  );
   const { data, isLoading, isError, error, refetch } = useMemesQuery(params);
 
   const memes = data?.pages.flatMap((page) => page.memes) ?? [];
   const [featured, ...rest] = memes;
   const featuredCard = featured ? toCardMeme(featured) : null;
+
+  const getMediaUrl = (meme: ReturnType<typeof toCardMeme>) => {
+    return meme.videoSrc || meme.previewUrl || null;
+  };
+
+  const sanitizeFilename = (name: string) => {
+    return name
+      .trim()
+      .replace(/[^a-z0-9]+/gi, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase();
+  };
+
+  const getExtension = (url: string, mediaType?: string) => {
+    if (mediaType === "video") return "mp4";
+
+    try {
+      const pathname = new URL(url).pathname;
+      const extension = pathname.split(".").pop()?.toLowerCase();
+
+      if (extension && /^(jpg|jpeg|png|webp|gif)$/i.test(extension)) {
+        return extension;
+      }
+    } catch {
+      // Fall back to jpg
+    }
+
+    return "jpg";
+  };
+
+  const onDownload = async (meme: ReturnType<typeof toCardMeme>) => {
+    const url = getMediaUrl(meme);
+
+    if (!url) {
+      console.error("No media URL available for download");
+      return;
+    }
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Download failed with status ${response.status}`);
+      }
+
+      const blob = await response.blob();
+
+      const objectUrl = URL.createObjectURL(blob);
+
+      const extension = getExtension(url, meme.videoSrc ? "video" : "image");
+      const filename = `${sanitizeFilename(meme.title || "memedrop-meme")}.${extension}`;
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = filename;
+      link.style.display = "none";
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error("Failed to download meme:", error);
+
+      // Fallback: open the media directly if fetching as a blob fails
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const onShare = async (meme: ReturnType<typeof toCardMeme>) => {
+    const shareUrl = `${window.location.origin}/meme/${meme.id}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: meme.title,
+          text: `Check out "${meme.title}" on MemeDrop`,
+          url: shareUrl,
+        });
+
+        return;
+      }
+
+      // Fallback for browsers without Web Share API
+      await navigator.clipboard.writeText(shareUrl);
+
+      setLinkCopied(true);
+
+      // Hide the notification after 2.5 seconds
+      window.setTimeout(() => {
+        setLinkCopied(false);
+      }, 2500);
+    } catch (error) {
+      // User cancelling the native share dialog isn't an error
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      console.error("Failed to share meme:", error);
+    }
+  };
 
   return (
     <div>
@@ -46,7 +158,12 @@ export function HomePage() {
 
       <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
         {CATEGORIES.map((cat) => (
-          <CategoryChip key={cat} label={cat} selected={activeCategory === cat} onClick={() => setActiveCategory(cat)} />
+          <CategoryChip
+            key={cat}
+            label={cat}
+            selected={activeCategory === cat}
+            onClick={() => setActiveCategory(cat)}
+          />
         ))}
       </div>
 
@@ -75,17 +192,35 @@ export function HomePage() {
             >
               <div className="relative h-72 w-full sm:h-80 lg:h-96">
                 {featuredCard.previewUrl ? (
-                  <img src={featuredCard.previewUrl} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={featuredCard.previewUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 ) : featuredCard.videoSrc ? (
-                  <video src={featuredCard.videoSrc} preload="metadata" muted playsInline className="h-full w-full object-cover" />
+                  <video
+                    src={featuredCard.videoSrc}
+                    preload="metadata"
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-surface-alt-light dark:bg-surface-alt">
-                    <ImageOff size={40} className="text-text-muted" strokeWidth={1.5} />
+                    <ImageOff
+                      size={40}
+                      className="text-text-muted"
+                      strokeWidth={1.5}
+                    />
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-5 pb-4 pt-16">
-                  <p className="mb-1 text-xs font-bold uppercase tracking-wide text-text-primary">🔥 Featured</p>
-                  <p className="text-xl font-bold text-text-primary">{featuredCard.title}</p>
+                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/30 to-transparent px-5 pb-4 pt-16">
+                  <p className="mb-1 text-xs font-bold uppercase tracking-wide text-text-primary">
+                    🔥 Featured
+                  </p>
+                  <p className="text-xl font-bold text-text-primary">
+                    {featuredCard.title}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -93,10 +228,41 @@ export function HomePage() {
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {rest.map((item) => (
-              <MediaCard key={item.id} meme={toCardMeme(item)} variant="grid" onDownload={() => {}} onShare={() => {}} />
+              <MediaCard
+                key={item.id}
+                meme={toCardMeme(item)}
+                variant="grid"
+                onDownload={() => onDownload(toCardMeme(item))}
+                onShare={() => onShare(toCardMeme(item))}
+              />
             ))}
           </div>
         </>
+      )}
+
+      {linkCopied && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
+        >
+          <div className="flex items-center gap-2 rounded-full bg-surface-alt px-4 py-3 text-sm font-semibold text-text-primary shadow-lg ring-1 ring-border">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            Link copied!
+          </div>
+        </div>
       )}
     </div>
   );
