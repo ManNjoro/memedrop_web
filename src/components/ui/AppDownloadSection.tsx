@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
-import { Apple, Smartphone } from 'lucide-react';
-import { APP_STORE_URL, PLAY_STORE_URL } from '@/lib/constants';
-import { cn } from '@/lib/utils';
+import { APP_STORE_URL, GITHUB_URL, PLAY_STORE_URL } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { Apple, Download, Smartphone } from "lucide-react";
+import type { ReactNode } from "react";
 
 type StoreBadgeProps = {
   href: string | null;
@@ -15,22 +15,24 @@ function StoreBadge({ href, icon, eyebrow, label }: StoreBadgeProps) {
   return (
     <a
       href={href ?? undefined}
-      target={href ? '_blank' : undefined}
-      rel={href ? 'noreferrer' : undefined}
+      target={href ? "_blank" : undefined}
+      rel={href ? "noreferrer" : undefined}
       aria-disabled={disabled}
-      title={disabled ? 'Coming soon' : undefined}
+      title={disabled ? "Coming soon" : undefined}
       className={cn(
-        'flex items-center gap-3 rounded-lg border border-border-light dark:border-border bg-surface-alt-light dark:bg-surface-alt px-4 py-2.5 transition-opacity',
-        disabled ? 'cursor-default opacity-50' : 'hover:opacity-80'
+        "flex items-center gap-3 rounded-lg border border-border-light dark:border-border bg-surface-alt-light dark:bg-surface-alt px-4 py-2.5 transition-opacity",
+        disabled ? "cursor-default opacity-50" : "hover:opacity-80",
       )}
       onClick={(e) => disabled && e.preventDefault()}
     >
       {icon}
       <span className="text-left leading-tight">
         <span className="block text-[10px] uppercase tracking-wide text-text-muted">
-          {disabled ? 'Coming soon' : eyebrow}
+          {disabled ? "Coming soon" : eyebrow}
         </span>
-        <span className="block text-sm font-bold text-text-primary-light dark:text-text-primary">{label}</span>
+        <span className="block text-sm font-bold text-text-primary-light dark:text-text-primary">
+          {label}
+        </span>
       </span>
     </a>
   );
@@ -52,21 +54,43 @@ export function AppDownloadSection() {
             Take MemeDrop with you
           </h2>
           <p className="mt-1 max-w-md text-sm text-text-secondary-light dark:text-text-secondary">
-            Browse, drop, and share memes on the go — get the app for iOS and Android.
+            Browse, drop, and share memes on the go — get the app for iOS and
+            Android.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <StoreBadge
             href={APP_STORE_URL}
-            icon={<Apple size={26} className="shrink-0 text-text-primary-light dark:text-text-primary" />}
+            icon={
+              <Apple
+                size={26}
+                className="shrink-0 text-text-primary-light dark:text-text-primary"
+              />
+            }
             eyebrow="Download on the"
             label="App Store"
           />
           <StoreBadge
             href={PLAY_STORE_URL}
-            icon={<Smartphone size={26} className="shrink-0 text-text-primary-light dark:text-text-primary" />}
+            icon={
+              <Smartphone
+                size={26}
+                className="shrink-0 text-text-primary-light dark:text-text-primary"
+              />
+            }
             eyebrow="Get it on"
             label="Google Play"
+          />
+          <StoreBadge
+            href={GITHUB_URL}
+            icon={
+              <Download
+                size={26}
+                className="shrink-0 text-text-primary-light dark:text-text-primary"
+              />
+            }
+            eyebrow="Download the"
+            label="Android APK"
           />
         </div>
       </div>

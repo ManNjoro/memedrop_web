@@ -12,4 +12,6 @@ export const APP_STORE_URL: string | null = null;
  * matching `android.package` in app.json), but will show Google Play's
  * "not found" page publicly until the app is actually published there.
  */
-export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.mannjoro.memedrop';
+// export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.mannjoro.memedrop';
+export const PLAY_STORE_URL: string | null = null;
+export const GITHUB_URL = 'https://github.com/ManNjoro/memedrop/releases/download/preview/memedrop.apk';
