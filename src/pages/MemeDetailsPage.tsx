@@ -243,7 +243,8 @@ export function MemeDetailsPage() {
 
       <p className="mt-4 text-xs text-text-muted">
         {formatCompactNumber(meme.likesCount)} {meme.likesCount === 1 ? 'like' : 'likes'} ·{' '}
-        {formatCompactNumber(meme.viewsCount)} {meme.viewsCount === 1 ? 'view' : 'views'}
+        {formatCompactNumber(meme.viewsCount)} {meme.viewsCount === 1 ? 'view' : 'views'} ·{' '}
+        {formatCompactNumber(meme.downloadsCount)} {meme.downloadsCount === 1 ? 'download' : 'downloads'}
       </p>
 
       <div className="mt-5">

@@ -1,4 +1,3 @@
-// src/pages/ExplorePage.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WifiOff } from 'lucide-react';

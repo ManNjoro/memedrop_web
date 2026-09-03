@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonGrid } from "@/components/ui/Skeleton";
 import { InfiniteScrollSentinel } from "@/components/ui/InfiniteScrollSentinel";
 import { useMemesQuery } from "@/lib/queries/useMemesQuery";
-import type { FetchMemesParams } from "@/lib/api/memes";
+import { recordDownload, type FetchMemesParams } from "@/lib/api/memes";
+import { usePostHog } from "@posthog/react";
 
 const CATEGORIES = [
   "Trending",
@@ -88,6 +89,7 @@ export function HomePage() {
     hasNextPage,
     isFetchingNextPage,
   } = useMemesQuery(params);
+  const posthog = usePostHog();
 
   const memes = data?.pages.flatMap((page) => page.memes) ?? [];
   const [featured, ...rest] = memes;
@@ -125,6 +127,11 @@ export function HomePage() {
       document.body.removeChild(link);
 
       URL.revokeObjectURL(objectUrl);
+      recordDownload(meme.id).catch(() => {});
+      posthog?.capture("meme_downloaded", {
+        meme_id: meme.id,
+        media_type: meme.mediaType,
+      });
     } catch (error) {
       console.error("Failed to download meme:", error);
 
