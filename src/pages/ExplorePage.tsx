@@ -1,3 +1,4 @@
+// src/pages/ExplorePage.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WifiOff } from 'lucide-react';
@@ -6,9 +7,9 @@ import { CategoryChip } from '@/components/ui/Chip';
 import { MediaCard } from '@/components/ui/MediaCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
+import { InfiniteScrollSentinel } from '@/components/ui/InfiniteScrollSentinel';
 import { useMemesQuery } from '@/lib/queries/useMemesQuery';
 import { toCardMeme } from '@/lib/mappers';
-import { usePostHog } from '@posthog/react';
 
 const EXPLORE_CATEGORIES = [
   'Programming',
@@ -26,11 +27,13 @@ const EXPLORE_CATEGORIES = [
 
 export function ExplorePage() {
   const navigate = useNavigate();
-  const posthog = usePostHog();
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const { data, isLoading, isError, error, refetch } = useMemesQuery({ sort: 'most_popular', limit: 12 });
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useMemesQuery({
+    sort: 'most_popular',
+    limit: 20,
+  });
   const memes = data?.pages.flatMap((page) => page.memes) ?? [];
 
   const goToSearch = (q?: string) => {
@@ -56,7 +59,6 @@ export function ExplorePage() {
             label={cat}
             selected={activeCategory === cat}
             onClick={() => {
-              posthog?.capture('category_selected', { category: cat });
               setActiveCategory(cat);
               goToSearch(cat);
             }}
@@ -78,11 +80,18 @@ export function ExplorePage() {
       ) : memes.length === 0 ? (
         <EmptyState icon={WifiOff} title="Nothing trending yet." subtitle="Check back soon, or drop the first meme." />
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {memes.map((item) => (
-            <MediaCard key={item.id} meme={toCardMeme(item)} variant="grid" />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {memes.map((item) => (
+              <MediaCard key={item.id} meme={toCardMeme(item)} variant="grid" />
+            ))}
+          </div>
+          <InfiniteScrollSentinel onIntersect={() => fetchNextPage()} enabled={!!hasNextPage && !isFetchingNextPage} />
+          {isFetchingNextPage && <SkeletonGrid count={5} />}
+          {!hasNextPage && memes.length > 0 && (
+            <p className="py-6 text-center text-xs text-text-muted">You've reached the end.</p>
+          )}
+        </>
       )}
     </div>
   );

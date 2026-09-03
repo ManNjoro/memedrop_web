@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ImageOff, WifiOff } from "lucide-react";
+import { Check, ImageOff, WifiOff } from "lucide-react";
 import { CategoryChip } from "@/components/ui/Chip";
 import { MediaCard } from "@/components/ui/MediaCard";
 import { toCardMeme } from "@/lib/mappers";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SkeletonGrid } from "@/components/ui/Skeleton";
+import { InfiniteScrollSentinel } from "@/components/ui/InfiniteScrollSentinel";
 import { useMemesQuery } from "@/lib/queries/useMemesQuery";
 import type { FetchMemesParams } from "@/lib/api/memes";
 
@@ -21,17 +22,54 @@ type Category = (typeof CATEGORIES)[number];
 function paramsForCategory(category: Category): FetchMemesParams {
   switch (category) {
     case "Trending":
-      return { sort: "most_popular", limit: 13 };
+      return { sort: "most_popular", limit: 11 };
     case "Latest":
-      return { sort: "newest", limit: 13 };
+      return { sort: "newest", limit: 11 };
     case "Videos":
-      return { mediaType: "video", sort: "newest", limit: 13 };
+      return { mediaType: "video", sort: "newest", limit: 11 };
     case "Images":
-      return { mediaType: "image", sort: "newest", limit: 13 };
+      return { mediaType: "image", sort: "newest", limit: 11 };
     case "Popular":
-      return { sort: "most_downloaded", limit: 13 };
+      return { sort: "most_downloaded", limit: 11 };
   }
 }
+
+const getMediaUrl = (meme: ReturnType<typeof toCardMeme>) => {
+  return meme.videoSrc || meme.previewUrl || null;
+};
+
+const sanitizeFilename = (name: string) => {
+  return name
+    .trim()
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+};
+
+const getExtension = (url: string, mediaType?: string) => {
+  if (mediaType === "video") return "mp4";
+
+  try {
+    const pathname = new URL(url).pathname;
+    const extension = pathname.split(".").pop()?.toLowerCase();
+
+    if (extension && /^(jpg|jpeg|png|webp|gif)$/i.test(extension)) {
+      return extension;
+    }
+  } catch {
+    // Fall back to jpg
+  }
+
+  return "jpg";
+};
+
+const copyToClipboard = async (text: string) => {
+  if (!navigator.clipboard?.writeText) {
+    throw new Error("Clipboard API is not supported by this browser");
+  }
+
+  await navigator.clipboard.writeText(text);
+};
 
 export function HomePage() {
   const [activeCategory, setActiveCategory] = useState<Category>("Trending");
@@ -40,40 +78,20 @@ export function HomePage() {
     () => paramsForCategory(activeCategory),
     [activeCategory],
   );
-  const { data, isLoading, isError, error, refetch } = useMemesQuery(params);
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMemesQuery(params);
 
   const memes = data?.pages.flatMap((page) => page.memes) ?? [];
   const [featured, ...rest] = memes;
   const featuredCard = featured ? toCardMeme(featured) : null;
-
-  const getMediaUrl = (meme: ReturnType<typeof toCardMeme>) => {
-    return meme.videoSrc || meme.previewUrl || null;
-  };
-
-  const sanitizeFilename = (name: string) => {
-    return name
-      .trim()
-      .replace(/[^a-z0-9]+/gi, "-")
-      .replace(/^-+|-+$/g, "")
-      .toLowerCase();
-  };
-
-  const getExtension = (url: string, mediaType?: string) => {
-    if (mediaType === "video") return "mp4";
-
-    try {
-      const pathname = new URL(url).pathname;
-      const extension = pathname.split(".").pop()?.toLowerCase();
-
-      if (extension && /^(jpg|jpeg|png|webp|gif)$/i.test(extension)) {
-        return extension;
-      }
-    } catch {
-      // Fall back to jpg
-    }
-
-    return "jpg";
-  };
 
   const onDownload = async (meme: ReturnType<typeof toCardMeme>) => {
     const url = getMediaUrl(meme);
@@ -119,6 +137,7 @@ export function HomePage() {
     const shareUrl = `${window.location.origin}/meme/${meme.id}`;
 
     try {
+      // Use native Web Share when available
       if (navigator.share) {
         await navigator.share({
           title: meme.title,
@@ -129,17 +148,16 @@ export function HomePage() {
         return;
       }
 
-      // Fallback for browsers without Web Share API
-      await navigator.clipboard.writeText(shareUrl);
+      // Otherwise copy the link
+      await copyToClipboard(shareUrl);
 
       setLinkCopied(true);
 
-      // Hide the notification after 2.5 seconds
       window.setTimeout(() => {
         setLinkCopied(false);
       }, 2500);
     } catch (error) {
-      // User cancelling the native share dialog isn't an error
+      // User cancelled native share dialog
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
@@ -237,9 +255,18 @@ export function HomePage() {
               />
             ))}
           </div>
+          <InfiniteScrollSentinel
+            onIntersect={() => fetchNextPage()}
+            enabled={!!hasNextPage && !isFetchingNextPage}
+          />
+          {isFetchingNextPage && <SkeletonGrid count={5} />}
+          {!hasNextPage && memes.length > 0 && (
+            <p className="py-6 text-center text-xs text-text-muted">
+              You've reached the end.
+            </p>
+          )}
         </>
       )}
-
       {linkCopied && (
         <div
           role="status"
@@ -247,19 +274,7 @@ export function HomePage() {
           className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
         >
           <div className="flex items-center gap-2 rounded-full bg-surface-alt px-4 py-3 text-sm font-semibold text-text-primary shadow-lg ring-1 ring-border">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
+            <Check size={18} strokeWidth={2.5} />
             Link copied!
           </div>
         </div>
