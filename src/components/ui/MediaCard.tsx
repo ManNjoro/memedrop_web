@@ -188,66 +188,7 @@ export function MediaCard({
           )}
 
           {/* Quick actions */}
-          {(onShare || onDownload) && (
-            <div
-              className={cn(
-                "absolute right-2.5 top-2.5",
-                "flex gap-1.5",
-                "opacity-0 translate-y-1",
-                "transition-all duration-200",
-                "group-hover:translate-y-0 group-hover:opacity-100",
-                "group-focus-within:translate-y-0 group-focus-within:opacity-100"
-              )}
-            >
-              {onShare && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onShare();
-                  }}
-                  aria-label="Share meme"
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center",
-                    "rounded-full",
-                    "border border-white/10",
-                    "bg-black/60 backdrop-blur-md",
-                    "text-white",
-                    "transition-colors",
-                    "hover:bg-black/80",
-                    "cursor-pointer",
-                  )}
-                >
-                  <Share2 size={15} />
-                </button>
-              )}
-
-              {onDownload && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onDownload();
-                  }}
-                  aria-label="Download meme"
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center",
-                    "rounded-full",
-                    "border border-white/10",
-                    "bg-black/60 backdrop-blur-md",
-                    "text-white",
-                    "transition-colors",
-                    "hover:bg-black/80",
-                    "cursor-pointer",
-                  )}
-                >
-                  <Download size={15} />
-                </button>
-              )}
-            </div>
-          )}
+          
         </div>
 
         {/* Content */}
@@ -321,6 +262,66 @@ export function MediaCard({
           </div>
         </div>
       </Link>
+      {(onShare || onDownload) && (
+            <div
+              className={cn(
+                "absolute right-2.5 top-2.5",
+                "flex gap-1.5",
+                "opacity-0 translate-y-1",
+                "transition-all duration-200",
+                "group-hover:translate-y-0 group-hover:opacity-100",
+                "group-focus-within:translate-y-0 group-focus-within:opacity-100"
+              )}
+            >
+              {onShare && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onShare();
+                  }}
+                  aria-label="Share meme"
+                  className={cn(
+                    "flex h-9 w-9 items-center justify-center",
+                    "rounded-full",
+                    "border border-white/10",
+                    "bg-black/60 backdrop-blur-md",
+                    "text-white",
+                    "transition-colors",
+                    "hover:bg-black/80",
+                    "cursor-pointer",
+                  )}
+                >
+                  <Share2 size={15} />
+                </button>
+              )}
+
+              {onDownload && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDownload();
+                  }}
+                  aria-label="Download meme"
+                  className={cn(
+                    "flex h-9 w-9 items-center justify-center",
+                    "rounded-full",
+                    "border border-white/10",
+                    "bg-black/60 backdrop-blur-md",
+                    "text-white",
+                    "transition-colors",
+                    "hover:bg-black/80",
+                    "cursor-pointer",
+                  )}
+                >
+                  <Download size={15} />
+                </button>
+              )}
+            </div>
+          )}
     </article>
   );
 }
