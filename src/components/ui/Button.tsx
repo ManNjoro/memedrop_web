@@ -13,7 +13,7 @@ export function PrimaryButton({ children, loading, disabled, icon, className, ..
     <button
       disabled={isDisabled}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-bold text-text-primary',
+        'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-bold text-text-primary cursor-pointer',
         'bg-linear-to-br from-primary to-primary-pressed transition-opacity',
         'hover:opacity-90 active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed',
         className
@@ -32,7 +32,7 @@ export function SecondaryButton({ children, loading, disabled, icon, className, 
     <button
       disabled={isDisabled}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-semibold',
+        'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-semibold cursor-pointer',
         'bg-surface-alt-light dark:bg-surface-alt border border-border-light dark:border-border',
         'text-text-primary-light dark:text-text-primary transition-colors',
         'hover:bg-border-light dark:hover:bg-border disabled:opacity-40 disabled:cursor-not-allowed',

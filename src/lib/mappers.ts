@@ -22,6 +22,9 @@ export function toCardMeme(item: ApiMemeListItem): CardMeme {
     creatorAvatar: item.uploaderAvatarUrl,
     uploadedAt: formatRelativeTime(item.createdAt),
     aspectRatio: item.width && item.height ? item.width / item.height : undefined,
+    downloadsCount: item.downloadsCount,
+    likesCount: item.likesCount,
+    viewsCount: item.viewsCount
   };
 }
 
