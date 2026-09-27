@@ -196,6 +196,7 @@ export function MediaCard({
                 "opacity-0 translate-y-1",
                 "transition-all duration-200",
                 "group-hover:translate-y-0 group-hover:opacity-100",
+                "group-focus-within:translate-y-0 group-focus-within:opacity-100"
               )}
             >
               {onShare && (

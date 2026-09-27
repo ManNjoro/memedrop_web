@@ -259,7 +259,7 @@ export function MemeDetailsPage() {
           onClick={onToggleLike}
           disabled={likeMutation.isPending}
           className={cn(
-            'flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold sm:min-w-32.5',
+            'flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold sm:min-w-32.5 cursor-pointer',
             meme.isLiked
               ? 'border-danger bg-danger/10 text-danger'
               : 'border-border-light dark:border-border bg-surface-alt-light dark:bg-surface-alt text-text-primary-light dark:text-text-primary'
@@ -273,7 +273,7 @@ export function MemeDetailsPage() {
           onClick={onToggleSave}
           disabled={saveMutation.isPending}
           className={cn(
-            'flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold sm:min-w-32.5',
+            'flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold sm:min-w-32.5 cursor-pointer',
             meme.isSaved
               ? 'border-primary bg-primary/10 text-primary'
               : 'border-border-light dark:border-border bg-surface-alt-light dark:bg-surface-alt text-text-primary-light dark:text-text-primary'
