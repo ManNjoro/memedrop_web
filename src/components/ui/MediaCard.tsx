@@ -1,47 +1,71 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Download,
   ImageOff,
   Play,
   Share2,
   Clock3,
-} from 'lucide-react';
-import { Avatar } from './Avatar';
-import { cn } from '@/lib/utils';
+  MessageCircle,
+  Heart,
+  Eye,
+} from "lucide-react";
+import { Avatar } from "./Avatar";
+import { cn } from "@/lib/utils";
 
 export type CardMeme = {
   id: string;
   title: string;
   previewUrl: string | null;
   videoSrc?: string;
-  mediaType: 'image' | 'video';
+  mediaType: "image" | "video";
   durationSec?: number | null;
+
   creatorName: string;
   creatorAvatar?: string | null;
   uploadedAt: string;
+
+  viewsCount?: number;
+  likesCount?: number;
+  downloadsCount?: number;
+  commentsCount?: number;
+
   aspectRatio?: number;
 };
 
 type MediaCardProps = {
   meme: CardMeme;
-  variant?: 'grid' | 'feed';
+  variant?: "grid" | "feed";
   onDownload?: () => void;
   onShare?: () => void;
 };
 
 function formatDuration(sec?: number | null) {
-  if (!sec) return '';
+  if (!sec) return "";
 
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
 
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatCount(value?: number | null) {
+  if (!value) return "0";
+
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  }
+
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  }
+
+  return value.toString();
 }
 
 export function MediaCard({
   meme,
-  variant = 'grid',
+  variant = "grid",
   onDownload,
   onShare,
 }: MediaCardProps) {
@@ -49,9 +73,7 @@ export function MediaCard({
 
   const showImage = Boolean(meme.previewUrl) && !imageFailed;
   const showVideoFallback =
-    !showImage &&
-    meme.mediaType === 'video' &&
-    Boolean(meme.videoSrc);
+    !showImage && meme.mediaType === "video" && Boolean(meme.videoSrc);
 
   /*
    * Important:
@@ -61,22 +83,22 @@ export function MediaCard({
    * grid row extremely tall.
    */
   const mediaAspect =
-    variant === 'grid'
-      ? '4 / 5'
+    variant === "grid"
+      ? "4 / 5"
       : meme.aspectRatio
         ? `${meme.aspectRatio}`
-        : '16 / 10';
+        : "16 / 10";
 
   return (
     <article
       className={cn(
-        'group relative overflow-hidden rounded-2xl',
-        'border border-border-light/70 dark:border-border',
-        'bg-surface-light dark:bg-surface',
-        'shadow-sm',
-        'transition-all duration-300',
-        'hover:-translate-y-1 hover:shadow-xl',
-        'hover:border-border-light dark:hover:border-border',
+        "group relative overflow-hidden rounded-2xl",
+        "border border-border-light/70 dark:border-border",
+        "bg-surface-light dark:bg-surface",
+        "shadow-sm",
+        "transition-all duration-300",
+        "hover:-translate-y-1 hover:shadow-xl",
+        "hover:border-border-light dark:hover:border-border",
       )}
     >
       <Link
@@ -96,9 +118,9 @@ export function MediaCard({
               loading="lazy"
               onError={() => setImageFailed(true)}
               className={cn(
-                'h-full w-full object-cover',
-                'transition-transform duration-500 ease-out',
-                'group-hover:scale-[1.04]',
+                "h-full w-full object-cover",
+                "transition-transform duration-500 ease-out",
+                "group-hover:scale-[1.04]",
               )}
             />
           ) : showVideoFallback ? (
@@ -108,9 +130,9 @@ export function MediaCard({
               muted
               playsInline
               className={cn(
-                'h-full w-full object-cover',
-                'transition-transform duration-500 ease-out',
-                'group-hover:scale-[1.04]',
+                "h-full w-full object-cover",
+                "transition-transform duration-500 ease-out",
+                "group-hover:scale-[1.04]",
               )}
             />
           ) : (
@@ -129,36 +151,33 @@ export function MediaCard({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/65 via-black/15 to-transparent" />
 
           {/* Video indicator */}
-          {meme.mediaType === 'video' && (
+          {meme.mediaType === "video" && (
             <>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div
                   className={cn(
-                    'flex h-12 w-12 items-center justify-center',
-                    'rounded-full',
-                    'border border-white/20',
-                    'bg-black/55 backdrop-blur-md',
-                    'shadow-lg',
-                    'transition-all duration-300',
-                    'group-hover:scale-110 group-hover:bg-black/70',
+                    "flex h-12 w-12 items-center justify-center",
+                    "rounded-full",
+                    "border border-white/20",
+                    "bg-black/55 backdrop-blur-md",
+                    "shadow-lg",
+                    "transition-all duration-300",
+                    "group-hover:scale-110 group-hover:bg-black/70",
                   )}
                 >
-                  <Play
-                    size={19}
-                    className="ml-0.5 fill-white text-white"
-                  />
+                  <Play size={19} className="ml-0.5 fill-white text-white" />
                 </div>
               </div>
 
               {meme.durationSec ? (
                 <div
                   className={cn(
-                    'absolute bottom-2.5 right-2.5',
-                    'flex items-center gap-1',
-                    'rounded-md',
-                    'bg-black/70 px-2 py-1',
-                    'text-[11px] font-medium text-white',
-                    'backdrop-blur-sm',
+                    "absolute bottom-2.5 right-2.5",
+                    "flex items-center gap-1",
+                    "rounded-md",
+                    "bg-black/70 px-2 py-1",
+                    "text-[11px] font-medium text-white",
+                    "backdrop-blur-sm",
                   )}
                 >
                   <Clock3 size={11} />
@@ -172,11 +191,11 @@ export function MediaCard({
           {(onShare || onDownload) && (
             <div
               className={cn(
-                'absolute right-2.5 top-2.5',
-                'flex gap-1.5',
-                'opacity-0 translate-y-1',
-                'transition-all duration-200',
-                'group-hover:translate-y-0 group-hover:opacity-100',
+                "absolute right-2.5 top-2.5",
+                "flex gap-1.5",
+                "opacity-0 translate-y-1",
+                "transition-all duration-200",
+                "group-hover:translate-y-0 group-hover:opacity-100",
               )}
             >
               {onShare && (
@@ -189,14 +208,14 @@ export function MediaCard({
                   }}
                   aria-label="Share meme"
                   className={cn(
-                    'flex h-9 w-9 items-center justify-center',
-                    'rounded-full',
-                    'border border-white/10',
-                    'bg-black/60 backdrop-blur-md',
-                    'text-white',
-                    'transition-colors',
-                    'hover:bg-black/80',
-                    'cursor-pointer',
+                    "flex h-9 w-9 items-center justify-center",
+                    "rounded-full",
+                    "border border-white/10",
+                    "bg-black/60 backdrop-blur-md",
+                    "text-white",
+                    "transition-colors",
+                    "hover:bg-black/80",
+                    "cursor-pointer",
                   )}
                 >
                   <Share2 size={15} />
@@ -213,14 +232,14 @@ export function MediaCard({
                   }}
                   aria-label="Download meme"
                   className={cn(
-                    'flex h-9 w-9 items-center justify-center',
-                    'rounded-full',
-                    'border border-white/10',
-                    'bg-black/60 backdrop-blur-md',
-                    'text-white',
-                    'transition-colors',
-                    'hover:bg-black/80',
-                    'cursor-pointer',
+                    "flex h-9 w-9 items-center justify-center",
+                    "rounded-full",
+                    "border border-white/10",
+                    "bg-black/60 backdrop-blur-md",
+                    "text-white",
+                    "transition-colors",
+                    "hover:bg-black/80",
+                    "cursor-pointer",
                   )}
                 >
                   <Download size={15} />
@@ -235,11 +254,11 @@ export function MediaCard({
           {/* Title */}
           <h3
             className={cn(
-              'line-clamp-2',
-              'text-sm font-semibold leading-5',
-              'text-text-primary-light dark:text-text-primary',
-              'transition-colors',
-              'group-hover:text-primary',
+              "line-clamp-2",
+              "text-sm font-semibold leading-5",
+              "text-text-primary-light dark:text-text-primary",
+              "transition-colors",
+              "group-hover:text-primary",
             )}
           >
             {meme.title}
@@ -262,6 +281,42 @@ export function MediaCard({
                 {meme.uploadedAt}
               </p>
             </div>
+          </div>
+
+          {/* Stats */}
+          <div
+            className={cn(
+              "mt-3 flex items-center gap-3",
+              "border-t border-border-light/60 dark:border-border/70",
+              "pt-2.5",
+              "text-[11px] text-text-muted",
+            )}
+          >
+            {/* Views */}
+            <div className="flex items-center gap-1">
+              <Eye size={13} strokeWidth={1.8} />
+              <span>{formatCount(meme.viewsCount)}</span>
+            </div>
+
+            {/* Likes */}
+            <div className="flex items-center gap-1">
+              <Heart size={13} strokeWidth={1.8} />
+              <span>{formatCount(meme.likesCount)}</span>
+            </div>
+
+            {/* Downloads */}
+            <div className="flex items-center gap-1">
+              <Download size={13} strokeWidth={1.8} />
+              <span>{formatCount(meme.downloadsCount)}</span>
+            </div>
+
+            {/* Comments */}
+            {meme.commentsCount !== undefined && (
+              <div className="flex items-center gap-1">
+                <MessageCircle size={13} strokeWidth={1.8} />
+                <span>{formatCount(meme.commentsCount)}</span>
+              </div>
+            )}
           </div>
         </div>
       </Link>
