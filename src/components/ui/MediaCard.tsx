@@ -126,7 +126,7 @@ export function MediaCard({
           )}
 
           {/* Subtle bottom gradient */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/65 via-black/15 to-transparent" />
 
           {/* Video indicator */}
           {meme.mediaType === 'video' && (
